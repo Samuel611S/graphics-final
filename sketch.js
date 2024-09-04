@@ -20,16 +20,15 @@ let faceReplacementIndex = 0;
 
 // Image captions for grid
 let captions = [
-    ["Original Image", "Grayscale Image", "Pixelated Image", "Red Channel", "Green Channel", "Blue Channel", "Red Thresholded", "Green Thresholded", "Blue Thresholded", "B&W Thresholded", "TCbCr Image", "HSV Image", "Face Detection", "Threshold TCbCr", "Threshold HSV"]
+    ["Original Image", "Grayscale Image", "Pixelated Image", "Red Channel", "Green Channel", "Blue Channel", "Red Thresholded", "Green Thresholded", "Blue Thresholded", "B&W Thresholded", "TCbCr Image", "HSV Image", "Face Detection", "Threshold TCbCr", "Threshold HSV","Sepia Image","Inverted","Emboss","Gaussian Blur","Aesthetic","Hacked"]
 ];
 
-
 function setup() {
-    createCanvas(160 * 3, 160 * 5);
+    createCanvas(160 * 4, 140 * 5);
 
     //Creating the video and setting the size for each grid 
     video = createCapture(VIDEO, function () {
-        video.size(160, 160);
+        video.size(160, 120);
         for (let i = 0; i < 4 * 5; i++) {
             canvasList.push(createGraphics(160, 120));
         }
@@ -103,87 +102,44 @@ function setup() {
         }
     });    
 }
-
-function faceReady() {
-    faceapi.detect(gotResults)
-    console.log('Face model ready!');
-}
-
-function gotResults(err, result) {
-    if (err) {
-        console.log(err);
-        return;
-    }
-    // call the draw() function to display the grid upon detection
-    detections = result;
-    draw(); 
-}
-
+draw();
 
 function draw() {
     background(255);
-
     if (video.loadedmetadata) {
-        // Capture the current video frame
         let scaledImage = createImage(160, 120);
         scaledImage.copy(video, 0, 0, video.width, video.height, 0, 0, scaledImage.width, scaledImage.height);
 
-        // Display original image
-        displayImage(scaledImage, 0, 0, captions[0][0]);
+        // Row 0
+        displayImage(scaledImage, 0, 0, captions[0][0]);  // Original
+        displayImage(convertToGrayscale(scaledImage), 1, 0, captions[0][1]);  // Grayscale
+        displayImage(convertToPixelate(scaledImage, pixelSize), 2, 0, captions[0][2]);  // Pixelated
+        displayImage(splitIntoChannels(scaledImage)[0], 3, 0, captions[0][3]);  // Red Channel
+        
+        // Row 1
+        displayImage(splitIntoChannels(scaledImage)[1], 0, 1, captions[0][4]);  // Green Channel
+        displayImage(splitIntoChannels(scaledImage)[2], 1, 1, captions[0][5]);  // Blue Channel
+        displayImage(applyThreshold(splitIntoChannels(scaledImage)[0], redSlider.value()), 2, 1, captions[0][6]);  // Red Thresholded
+        displayImage(applyThreshold(splitIntoChannels(scaledImage)[1], greenSlider.value()), 3, 1, captions[0][7]);  // Green Thresholded
+        
+        // Row 2
+        displayImage(applyThreshold(splitIntoChannels(scaledImage)[2], blueSlider.value()), 0, 2, captions[0][8]);  // Blue Thresholded
+        displayImage(blackAndWhiteThresholdImage(scaledImage, 128), 1, 2, captions[0][9]);  // B&W Thresholded
+        displayImage(convertToTCbCr(scaledImage), 2, 2, captions[0][10]);  // TCbCr Image
+        displayImage(convertToHSV(scaledImage), 3, 2, captions[0][11]);  // HSV Image
+        
+        // Row 3
+        displayImage(tcbrImageThreshold(scaledImage, tcbrThresholdSlider.value()), 0, 3, captions[0][13]);  // TCbCr Thresholded
+        displayImage(hsvImageThreshold(scaledImage, hsvThresholdSlider.value()), 1, 3, captions[0][14]);  // HSV Thresholded
+        displayImage(applySepia(scaledImage), 2, 3, captions[0][15]);  // Sepia Image
+        displayImage(invertColors(scaledImage), 3, 3, captions[0][16]); // Inverted Colors
 
-        // Display grayscale image
-        let grayscaleImage = convertToGrayscale(scaledImage);
-        displayImage(grayscaleImage, 1, 0, captions[0][1]);
-
-        // Display pixalated image
-        let pixelatedImage = convertToPixelate(scaledImage, pixelSize);
-        displayImage(pixelatedImage, 2, 0, captions[0][2]);
-
-        // Display individual channels
-        let channels = splitIntoChannels(scaledImage);
-        displayImage(channels[0], 0, 1, captions[0][3]);
-        displayImage(channels[1], 1, 1, captions[0][4]);
-        displayImage(channels[2], 2, 1, captions[0][5]);
-
-        // Display thresholded images
-        let redThresholdedImage = applyThreshold(channels[0], redSlider.value());
-        let greenThresholdedImage = applyThreshold(channels[1], greenSlider.value());
-        let blueThresholdedImage = applyThreshold(channels[2], blueSlider.value());
-        displayImage(redThresholdedImage, 0, 2, captions[0][6]);
-        displayImage(greenThresholdedImage, 1, 2, captions[0][7]);
-        displayImage(blueThresholdedImage, 2, 2, captions[0][8]);
-
-        // Display B&W thresholded image
-        let bAndWThresholdedImage = blackAndWhiteThresholdImage(scaledImage, 128);
-        displayImage(bAndWThresholdedImage, 0, 3, captions[0][9]);
-
-        // Display converted images
-        let tcbrImage = convertToTCbCr(scaledImage);
-        displayImage(tcbrImage, 1, 3, captions[0][10]);
-        let hsvImage = convertToHSV(scaledImage);
-        displayImage(hsvImage, 2, 3, captions[0][11]);
-
-        // Display face detection results in grid
-        faceCanvas.image(scaledImage, 0, 0);
-        if (detections) {
-            detectAndDrawFaces(faceCanvas);
-        }
-        displayImage(faceCanvas, 0, 4, captions[0][12]);
-
-        // Display thresholded tcbrImage
-        let tcbrThreshold = tcbrImageThreshold(scaledImage, tcbrThresholdSlider.value());
-        displayImage(tcbrThreshold, 1, 4, captions[0][13]);
-
-        // Display thresholded hsvImage
-        let hsvThreshold = hsvImageThreshold(scaledImage, hsvThresholdSlider.value());
-        displayImage(hsvThreshold, 2, 4, captions[0][14]);
-
-        // Display filter text
-        fill(0);
-        textAlign(CENTER);
-        textSize(16);
-        text(`Face Detection: ${currentFilterText}`, width / 2, height - 20);
-
+        // Row 4
+        displayImage(applyEmbossEffect(scaledImage), 0, 4, captions[0][17]); // Emboss Effect
+        displayImage(applyGaussianBlur(scaledImage), 1, 4, captions[0][18]); //Gaussian Blur
+        displayImage(applyAestheticFilter(scaledImage),2,4,captions[0][19]); //Aesthetic
+        displayImage(applyGlitchFilter(scaledImage), 3, 4, captions[0][20]);
+        
     }
 }
 
