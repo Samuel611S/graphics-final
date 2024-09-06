@@ -20,18 +20,22 @@ let faceReplacementIndex = 0;
 
 // Image captions for grid
 let captions = [
-    ["Original Image", "Grayscale Image", "Pixelated Image", "Red Channel", "Green Channel", "Blue Channel", "Red Thresholded", "Green Thresholded", "Blue Thresholded", "B&W Thresholded", "TCbCr Image", "HSV Image", "Face Detection", "Threshold TCbCr", "Threshold HSV","Sepia Image","Inverted","Emboss","Gaussian Blur","Aesthetic","Hacked"]
+    ["Original Image", "Grayscale Image", "Pixelated Image", "Red Channel", "Green Channel", "Blue Channel", "Red Thresholded", "Green Thresholded", "Blue Thresholded", "B&W Thresholded", "TCbCr Image", "HSV Image", "Threshold TCbCr", "Threshold HSV","Sepia Image","Inverted","Emboss","Gaussian Blur","Aesthetic","Hacked","Vignette","Enhanced Pixelation","Halftone","Color Shifting"]
 ];
 
 function setup() {
-    createCanvas(160 * 4, 140 * 5);
-
+    createCanvas(160 * 4, 140 * 6);
+    
     //Creating the video and setting the size for each grid 
     video = createCapture(VIDEO, function () {
         video.size(160, 120);
         for (let i = 0; i < 4 * 5; i++) {
             canvasList.push(createGraphics(160, 120));
         }
+         // Initialize sliders
+        pixelationSlider = select('#pixelationSlider');
+        halftoneSlider = select('#halftoneSlider');
+        colorShiftSlider = select('#colorShiftSlider');
         
         // Save Image button
          let saveImageButton = select('#saveImageButton');
@@ -129,17 +133,21 @@ function draw() {
         displayImage(convertToHSV(scaledImage), 3, 2, captions[0][11]);  // HSV Image
         
         // Row 3
-        displayImage(tcbrImageThreshold(scaledImage, tcbrThresholdSlider.value()), 0, 3, captions[0][13]);  // TCbCr Thresholded
-        displayImage(hsvImageThreshold(scaledImage, hsvThresholdSlider.value()), 1, 3, captions[0][14]);  // HSV Thresholded
-        displayImage(applySepia(scaledImage), 2, 3, captions[0][15]);  // Sepia Image
-        displayImage(invertColors(scaledImage), 3, 3, captions[0][16]); // Inverted Colors
+        displayImage(tcbrImageThreshold(scaledImage, tcbrThresholdSlider.value()), 0, 3, captions[0][12]);  // TCbCr Thresholded
+        displayImage(hsvImageThreshold(scaledImage, hsvThresholdSlider.value()), 1, 3, captions[0][13]);  // HSV Thresholded
+        displayImage(applySepia(scaledImage), 2, 3, captions[0][14]);  // Sepia Image
+        displayImage(invertColors(scaledImage), 3, 3, captions[0][15]); // Inverted Colors
 
         // Row 4
-        displayImage(applyEmbossEffect(scaledImage), 0, 4, captions[0][17]); // Emboss Effect
-        displayImage(applyGaussianBlur(scaledImage), 1, 4, captions[0][18]); //Gaussian Blur
-        displayImage(applyAestheticFilter(scaledImage),2,4,captions[0][19]); //Aesthetic
-        displayImage(applyGlitchFilter(scaledImage), 3, 4, captions[0][20]);
-        
+        displayImage(applyEmbossEffect(scaledImage), 0, 4, captions[0][16]); // Emboss Effect
+        displayImage(applyGaussianBlur(scaledImage), 1, 4, captions[0][17]); //Gaussian Blur
+        displayImage(applyAestheticFilter(scaledImage),2,4,captions[0][18]); //Aesthetic
+        displayImage(applyGlitchFilter(scaledImage), 3, 4, captions[0][19]); //Hacked
+        //Row 5
+        displayImage(applyVignetteFilter(scaledImage), 0, 5, captions[0][20]); //Vignette
+        displayImage(applyHeavyPixelationFilter(scaledImage, pixelationSlider.value()), 1, 5, captions[0][21]);  //Heavy Pixelation
+        displayImage(applyColorHalftoneFilter(scaledImage, halftoneSlider.value()), 2, 5, captions[0][22]); // Color Halftone
+        displayImage(applyColorShiftingFilter(scaledImage, colorShiftSlider.value()), 3, 5, captions[0][23]); //Color Shifting
     }
 }
 

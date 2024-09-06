@@ -21,7 +21,6 @@
         <div>
             Press "S" to active Save Image function
         </div>
-        </p> 
         <button id="captureButton">Capture Image</button>
         <button id="unfreezeButton">Uncapture</button>
         <button id="saveImageButton">Save Image</button>
@@ -29,7 +28,16 @@
           <!-- Container for top sliders -->
           <div id="topSliderContainer"><p>Color Thresholds</p>
         </div>
-
+        <div class="slider-container">
+            <label for="pixelationSlider">Pixelation:</label>
+            <input id="pixelationSlider" type="range" min="1" max="50" value="5">
+        </div>
+        <div class="slider-container">
+            <label for="halftoneSlider">Halftone Dot Size:</label>
+            <input id="halftoneSlider" type="range" min="1" max="20" value="5">
+            <label for="colorShiftSlider">Color Shift Amount:</label>
+            <input id="colorShiftSlider" type="range" min="-128" max="128" value="0">
+        </div>
         <!-- Container for bottom sliders -->
         <div id="bottomSliderContainer"><p>No Color Thresholds</p>
         </div>
@@ -55,6 +63,10 @@
     <script src="gaussianBlur.js"></script>
     <script src="aesthetic.js"></script>
     <script src="glitch.js"></script>
+    <script src="vignette.js"></script>
+    <script src="pixelatedExtra.js"></script>
+    <script src="colorHaftone.js"></script>
+    <script src="colorShifting.js"></script>
 </body>
 
 </html>

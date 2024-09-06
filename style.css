@@ -46,3 +46,6 @@ button:hover {
     background-color: #367c39; /* Darker green on hover */
     transform: scale(1.05); /* Slightly enlarges the button */
 }
+.slider-container {
+    margin: 5px;
+}
