@@ -20,7 +20,7 @@ let faceReplacementIndex = 0;
 
 // Image captions for grid
 let captions = [
-    ["Original Image", "Grayscale Image", "Pixelated Image", "Red Channel", "Green Channel", "Blue Channel", "Red Thresholded", "Green Thresholded", "Blue Thresholded", "B&W Thresholded", "TCbCr Image", "HSV Image", "Threshold TCbCr", "Threshold HSV","Sepia Image","Inverted","Emboss","Gaussian Blur","Aesthetic","Hacked","Vignette","Enhanced Pixelation","Halftone","Color Shifting","TimeWarp"]
+    ["Original", "Grayscale", "Pixelated", "Red Channel", "Green Channel", "Blue Channel", "Red Thresholded", "Green Thresholded", "Blue Thresholded", "B&W Thresholded", "TCbCr", "HSV", "Threshold TCbCr", "Threshold HSV","Sepia","Inverted","Emboss","Gaussian Blur","Aesthetic","Hacked","Vignette","Enhanced Pixelation","Halftone","Color Shifting","TimeWarp"]
 ];
 
 function setup() {
@@ -117,7 +117,7 @@ function draw() {
         let scaledImage = createImage(160, 120);
         scaledImage.copy(video, 0, 0, video.width, video.height, 0, 0, scaledImage.width, scaledImage.height);
 
-        // Row 0
+      
         displayImage(scaledImage, 0, 0, captions[0][0]);  // Original
         displayImage(convertToGrayscale(scaledImage), 1, 0, captions[0][1]);  // Grayscale
         
@@ -246,9 +246,9 @@ function saveImage() {
     let fullGridImage = createGraphics(width, height);
 
 // Loop through all the grids to capture all the grid
-for (let row = 0; row < 5; row++) {
-    for (let col = 0; col < 3; col++) {
-        let capturedImage = canvasList[row * 3 + col].get();
+for (let row = 0; row < 8; row++) {
+    for (let col = 0; col < 4; col++) {
+        let capturedImage = canvasList[row * 2 + col].get();
         fullGridImage.image(capturedImage, col * 160, row * 140);
     }
 }
