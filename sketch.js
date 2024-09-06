@@ -20,11 +20,11 @@ let faceReplacementIndex = 0;
 
 // Image captions for grid
 let captions = [
-    ["Original Image", "Grayscale Image", "Pixelated Image", "Red Channel", "Green Channel", "Blue Channel", "Red Thresholded", "Green Thresholded", "Blue Thresholded", "B&W Thresholded", "TCbCr Image", "HSV Image", "Threshold TCbCr", "Threshold HSV","Sepia Image","Inverted","Emboss","Gaussian Blur","Aesthetic","Hacked","Vignette","Enhanced Pixelation","Halftone","Color Shifting"]
+    ["Original Image", "Grayscale Image", "Pixelated Image", "Red Channel", "Green Channel", "Blue Channel", "Red Thresholded", "Green Thresholded", "Blue Thresholded", "B&W Thresholded", "TCbCr Image", "HSV Image", "Threshold TCbCr", "Threshold HSV","Sepia Image","Inverted","Emboss","Gaussian Blur","Aesthetic","Hacked","Vignette","Enhanced Pixelation","Halftone","Color Shifting","TimeWarp"]
 ];
 
 function setup() {
-    createCanvas(160 * 4, 140 * 6);
+    createCanvas(160 * 4, 140 * 7);
     
     //Creating the video and setting the size for each grid 
     video = createCapture(VIDEO, function () {
@@ -36,6 +36,9 @@ function setup() {
         pixelationSlider = select('#pixelationSlider');
         halftoneSlider = select('#halftoneSlider');
         colorShiftSlider = select('#colorShiftSlider');
+        timeWarpSlider = select('#timeWarpSlider');
+        
+        
         
         // Save Image button
          let saveImageButton = select('#saveImageButton');
@@ -117,37 +120,40 @@ function draw() {
         // Row 0
         displayImage(scaledImage, 0, 0, captions[0][0]);  // Original
         displayImage(convertToGrayscale(scaledImage), 1, 0, captions[0][1]);  // Grayscale
-        displayImage(convertToPixelate(scaledImage, pixelSize), 2, 0, captions[0][2]);  // Pixelated
-        displayImage(splitIntoChannels(scaledImage)[0], 3, 0, captions[0][3]);  // Red Channel
         
-        // Row 1
-        displayImage(splitIntoChannels(scaledImage)[1], 0, 1, captions[0][4]);  // Green Channel
-        displayImage(splitIntoChannels(scaledImage)[2], 1, 1, captions[0][5]);  // Blue Channel
-        displayImage(applyThreshold(splitIntoChannels(scaledImage)[0], redSlider.value()), 2, 1, captions[0][6]);  // Red Thresholded
-        displayImage(applyThreshold(splitIntoChannels(scaledImage)[1], greenSlider.value()), 3, 1, captions[0][7]);  // Green Thresholded
+        displayImage(splitIntoChannels(scaledImage)[0], 0, 1, captions[0][3]);  // Red Channel
         
-        // Row 2
-        displayImage(applyThreshold(splitIntoChannels(scaledImage)[2], blueSlider.value()), 0, 2, captions[0][8]);  // Blue Thresholded
-        displayImage(blackAndWhiteThresholdImage(scaledImage, 128), 1, 2, captions[0][9]);  // B&W Thresholded
-        displayImage(convertToTCbCr(scaledImage), 2, 2, captions[0][10]);  // TCbCr Image
-        displayImage(convertToHSV(scaledImage), 3, 2, captions[0][11]);  // HSV Image
+       
+        displayImage(splitIntoChannels(scaledImage)[1], 1, 1, captions[0][4]);  // Green Channel
+        displayImage(splitIntoChannels(scaledImage)[2], 2, 1, captions[0][5]);  // Blue Channel
+        displayImage(applyThreshold(splitIntoChannels(scaledImage)[0], redSlider.value()), 0, 2, captions[0][6]);  // Red Thresholded
+        displayImage(applyThreshold(splitIntoChannels(scaledImage)[1], greenSlider.value()), 1, 2, captions[0][7]);  // Green Thresholded
         
-        // Row 3
-        displayImage(tcbrImageThreshold(scaledImage, tcbrThresholdSlider.value()), 0, 3, captions[0][12]);  // TCbCr Thresholded
-        displayImage(hsvImageThreshold(scaledImage, hsvThresholdSlider.value()), 1, 3, captions[0][13]);  // HSV Thresholded
-        displayImage(applySepia(scaledImage), 2, 3, captions[0][14]);  // Sepia Image
-        displayImage(invertColors(scaledImage), 3, 3, captions[0][15]); // Inverted Colors
+     
+        displayImage(applyThreshold(splitIntoChannels(scaledImage)[2], blueSlider.value()), 2, 2, captions[0][8]);  // Blue Thresholded
+        displayImage(blackAndWhiteThresholdImage(scaledImage, 128), 3, 2, captions[0][9]);  // B&W Thresholded
+        displayImage(convertToTCbCr(scaledImage), 0, 3, captions[0][10]);  // TCbCr Image
+        displayImage(convertToHSV(scaledImage), 1, 3, captions[0][11]);  // HSV Image
+        
+     
+        displayImage(tcbrImageThreshold(scaledImage, tcbrThresholdSlider.value()), 2, 3, captions[0][12]);  // TCbCr Thresholded
+        displayImage(hsvImageThreshold(scaledImage, hsvThresholdSlider.value()), 3, 3, captions[0][13]);  // HSV Thresholded
+        
+        displayImage(applyTimeWarpFilter(scaledImage, timeWarpSlider), 0, 4, captions[0][24]);  // Time Warp     
+        displayImage(convertToPixelate(scaledImage, pixelSize), 1, 4, captions[0][2]);  // Pixelated
+        displayImage(applySepia(scaledImage), 2, 4, captions[0][14]);  // Sepia Image
+        displayImage(invertColors(scaledImage), 3, 4, captions[0][15]); // Inverted Colors
 
-        // Row 4
-        displayImage(applyEmbossEffect(scaledImage), 0, 4, captions[0][16]); // Emboss Effect
-        displayImage(applyGaussianBlur(scaledImage), 1, 4, captions[0][17]); //Gaussian Blur
-        displayImage(applyAestheticFilter(scaledImage),2,4,captions[0][18]); //Aesthetic
-        displayImage(applyGlitchFilter(scaledImage), 3, 4, captions[0][19]); //Hacked
-        //Row 5
-        displayImage(applyVignetteFilter(scaledImage), 0, 5, captions[0][20]); //Vignette
-        displayImage(applyHeavyPixelationFilter(scaledImage, pixelationSlider.value()), 1, 5, captions[0][21]);  //Heavy Pixelation
-        displayImage(applyColorHalftoneFilter(scaledImage, halftoneSlider.value()), 2, 5, captions[0][22]); // Color Halftone
-        displayImage(applyColorShiftingFilter(scaledImage, colorShiftSlider.value()), 3, 5, captions[0][23]); //Color Shifting
+      
+        displayImage(applyEmbossEffect(scaledImage), 0, 5, captions[0][16]); // Emboss Effect
+        displayImage(applyGaussianBlur(scaledImage), 1, 5, captions[0][17]); //Gaussian Blur
+        displayImage(applyAestheticFilter(scaledImage),2,5,captions[0][18]); //Aesthetic
+        displayImage(applyGlitchFilter(scaledImage), 3, 5, captions[0][19]); //Hacked
+       
+        displayImage(applyVignetteFilter(scaledImage), 0, 6, captions[0][20]); //Vignette
+        displayImage(applyHeavyPixelationFilter(scaledImage, pixelationSlider.value()), 1, 6, captions[0][21]);  //Heavy Pixelation
+        displayImage(applyColorHalftoneFilter(scaledImage, halftoneSlider.value()), 2, 6, captions[0][22]); // Color Halftone
+        displayImage(applyColorShiftingFilter(scaledImage, colorShiftSlider.value()), 3, 6, captions[0][23]); //Color Shifting
     }
 }
 
@@ -155,7 +161,7 @@ function draw() {
 
 
 function displayImage(img, col, row, caption) {
-    let index = row * 3 + col;
+    let index = row * 2 + col;
 
     // Clear the canvas before drawing the new image
     canvasList[index].clear();

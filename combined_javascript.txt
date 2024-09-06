@@ -1,0 +1,906 @@
+
+ -------------------- aesthetic.js ------------------------ 
+
+function applyAestheticFilter(inputImage) {
+    let outputImage = createImage(inputImage.width, inputImage.height);
+    outputImage.copy(inputImage, 0, 0, inputImage.width, inputImage.height, 0, 0, outputImage.width, outputImage.height);
+
+    // Step 1: Apply a color tint (e.g., a soft pink or teal tone)
+    outputImage.loadPixels();
+    for (let i = 0; i < outputImage.pixels.length; i += 4) {
+        outputImage.pixels[i] += 30;    // Red Channel
+        outputImage.pixels[i + 1] += 10; // Green Channel
+        outputImage.pixels[i + 2] += 50; // Blue Channel
+    }
+    outputImage.updatePixels();
+
+    // Step 2: Apply a vignette effect
+    outputImage = applyVignette(outputImage);
+
+    // Step 3: Apply a slight blur to soften the image
+    outputImage = applyGaussianBlur(outputImage);
+
+    return outputImage;
+}
+
+function applyVignette(inputImage) {
+    let outputImage = createImage(inputImage.width, inputImage.height);
+    outputImage.copy(inputImage, 0, 0, inputImage.width, inputImage.height, 0, 0, outputImage.width, outputImage.height);
+
+    let centerX = inputImage.width / 2;
+    let centerY = inputImage.height / 2;
+    let maxDistance = dist(0, 0, centerX, centerY);
+
+    outputImage.loadPixels();
+    for (let x = 0; x < inputImage.width; x++) {
+        for (let y = 0; y < inputImage.height; y++) {
+            let d = dist(x, y, centerX, centerY);
+            let vignetteFactor = map(d, 0, maxDistance, 1, 0.4);  // Vignette strength
+
+            let index = (y * inputImage.width + x) * 4;
+            outputImage.pixels[index] *= vignetteFactor;    // Red Channel
+            outputImage.pixels[index + 1] *= vignetteFactor; // Green Channel
+            outputImage.pixels[index + 2] *= vignetteFactor; // Blue Channel
+        }
+    }
+    outputImage.updatePixels();
+
+    return outputImage;
+}
+
+ -------------------- colorHaftone.js ------------------------ 
+
+function applyColorHalftoneFilter(inputImage, dotSize) {
+    let outputImage = createImage(inputImage.width, inputImage.height);
+    outputImage.copy(inputImage, 0, 0, inputImage.width, inputImage.height, 0, 0, outputImage.width, outputImage.height);
+    outputImage.loadPixels();
+    inputImage.loadPixels();
+
+    for (let y = 0; y < outputImage.height; y += dotSize) {
+        for (let x = 0; x < outputImage.width; x += dotSize) {
+            let c = inputImage.get(x, y);
+            let r = red(c);
+            let g = green(c);
+            let b = blue(c);
+
+            // Draw a filled circle with color at the original position
+            for (let dy = 0; dy < dotSize; dy++) {
+                for (let dx = 0; dx < dotSize; dx++) {
+                    let px = x + dx;
+                    let py = y + dy;
+                    if (px < outputImage.width && py < outputImage.height) {
+                        let d = dist(px, py, x + dotSize / 2, y + dotSize / 2);
+                        if (d < dotSize / 2) {
+                            let index = (px + py * outputImage.width) * 4;
+                            outputImage.pixels[index] = r;       // Red
+                            outputImage.pixels[index + 1] = g;   // Green
+                            outputImage.pixels[index + 2] = b;   // Blue
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    outputImage.updatePixels();
+    return outputImage;
+}
+
+ -------------------- colorShifting.js ------------------------ 
+
+function applyColorShiftingFilter(inputImage, shiftAmount) {
+    let outputImage = createImage(inputImage.width, inputImage.height);
+    outputImage.copy(inputImage, 0, 0, inputImage.width, inputImage.height, 0, 0, outputImage.width, outputImage.height);
+
+    outputImage.loadPixels();
+    for (let i = 0; i < outputImage.pixels.length; i += 4) {
+        outputImage.pixels[i] = (outputImage.pixels[i] + shiftAmount) % 256;        // Red Channel
+        outputImage.pixels[i + 1] = (outputImage.pixels[i + 1] + shiftAmount) % 256; // Green Channel
+        outputImage.pixels[i + 2] = (outputImage.pixels[i + 2] + shiftAmount) % 256; // Blue Channel
+    }
+    outputImage.updatePixels();
+
+    return outputImage;
+}
+
+ -------------------- colourspace.js ------------------------ 
+
+// Function to convert image to YCbCr filter
+function convertToTCbCr(inputImage) {
+    let tcbrImage = createImage(inputImage.width, inputImage.height);
+    tcbrImage.copy(inputImage, 0, 0, inputImage.width, inputImage.height, 0, 0, tcbrImage.width, tcbrImage.height);
+  
+    tcbrImage.loadPixels();
+    // Process each pixel in the image
+    for (let i = 0; i < tcbrImage.pixels.length; i += 4) {
+        let r = tcbrImage.pixels[i];
+        let g = tcbrImage.pixels[i + 1];
+        let b = tcbrImage.pixels[i + 2];
+  
+        //Convert RGB colouring to YCbCr color space
+        let Y = 0.299 * r + 0.587 * g + 0.114 * b;
+        let Cb = -0.1687 * r - 0.3313 * g + 0.5 * b + 128;
+        let Cr = 0.5 * r - 0.4187 * g - 0.0813 * b + 128;
+  
+        // Update the pixel value in YCbCr color space
+        tcbrImage.pixels[i] = Y;
+        tcbrImage.pixels[i + 1] = Cb;
+        tcbrImage.pixels[i + 2] = Cr;
+    }
+    tcbrImage.updatePixels();
+  
+    return tcbrImage;
+  }
+  
+  // Function to convert image to HSV filter
+  function convertToHSV(inputImage) {
+    let hsvImage = createImage(inputImage.width, inputImage.height);
+    hsvImage.copy(inputImage, 0, 0, inputImage.width, inputImage.height, 0, 0, hsvImage.width, hsvImage.height);
+  
+    hsvImage.loadPixels();
+    // Process each pixel in the image
+    for (let i = 0; i < hsvImage.pixels.length; i += 4) {
+        let r = hsvImage.pixels[i] / 255;
+        let g = hsvImage.pixels[i + 1] / 255;
+        let b = hsvImage.pixels[i + 2] / 255;
+  
+        // Calculate min, max and delta value for RGB
+        let maxVal = max(r, g, b);
+        let minVal = min(r, g, b);
+        let delta = maxVal - minVal;
+
+        // Calculate the HSV values
+        let hue = 0;
+        let saturation = 0;
+        let value = maxVal * 100;
+  
+        if (delta !== 0) {
+            if (maxVal === r) {
+                hue = (g - b) / delta + (g < b ? 6 : 0);
+            } else if (maxVal === g) {
+                hue = (b - r) / delta + 2;
+            } else {
+                hue = (r - g) / delta + 4;
+            }
+  
+            saturation = delta / maxVal * 100;
+        }
+  
+        // Update the pixel value in HSV color space
+        hsvImage.pixels[i] = hue * 60;
+        hsvImage.pixels[i + 1] = saturation;
+        hsvImage.pixels[i + 2] = value;
+    }
+    hsvImage.updatePixels();
+  
+    return hsvImage;
+  }
+ -------------------- colourspaceThresholding.js ------------------------ 
+
+// Function for Coloured Thresholding Image
+function applyThresholdColourSpace(inputImage, threshold, thresholdSlider) {
+    let thresholdedImage = createImage(inputImage.width, inputImage.height);
+    thresholdedImage.copy(inputImage, 0, 0, inputImage.width, inputImage.height, 0, 0, thresholdedImage.width, thresholdedImage.height);
+
+    thresholdedImage.loadPixels();
+    for (let i = 0; i < thresholdedImage.pixels.length; i += 4) {
+        let pixelRed = thresholdedImage.pixels[i];
+        let pixelGreen = thresholdedImage.pixels[i + 1];
+        let pixelBlue = thresholdedImage.pixels[i + 2];
+
+        // Calculate intensity of thresholding
+        let intensity = calculateIntensity(pixelRed, pixelGreen, pixelBlue);
+
+        // Adjust the intensity based on slider
+        intensity = (thresholdSlider.value() > intensity) ? 0 : intensity;
+
+        // Update each channel with thresholded values
+        thresholdedImage.pixels[i] = pixelRed * (intensity / 255); // Red channel
+        thresholdedImage.pixels[i + 1] = pixelGreen * (intensity / 255); // Green channel
+        thresholdedImage.pixels[i + 2] = pixelBlue * (intensity / 255); // Blue channel
+
+        thresholdedImage.pixels[i + 3] = thresholdedImage.pixels[i + 3];
+    }
+    thresholdedImage.updatePixels();
+
+    return thresholdedImage;
+}
+
+function calculateIntensity(red, green, blue) {
+    // Calculate intensity 
+    return (red + green + blue) / 1.7;
+}
+
+function tcbrImageThreshold(inputImage) {
+    let tcbrThreshold = tcbrThresholdSlider.value(); 
+    let tcbrImage = convertToTCbCr(inputImage);
+    let thresholdedImage = applyThresholdColourSpace(tcbrImage, tcbrThreshold, tcbrThresholdSlider);
+    return thresholdedImage;
+}
+
+function hsvImageThreshold(inputImage) {
+    let hsvThreshold = hsvThresholdSlider.value(); 
+    let hsvImage = convertToHSV(inputImage);
+    let thresholdedImage = applyThresholdColourSpace(hsvImage, hsvThreshold, hsvThresholdSlider);
+    return thresholdedImage;
+}
+
+ -------------------- embossEffect.js ------------------------ 
+
+function applyEmbossEffect(inputImage) {
+    // Clone the inputImage to avoid modifying the original image
+    let embossImage = inputImage.get();
+    embossImage.loadPixels();
+    let pixels = embossImage.pixels;
+
+    // Define the emboss kernel matrix
+    let kernel = [
+        [-2, -1, 0],
+        [-1, 1, 1],
+        [0, 1, 2]
+    ];
+
+    // Apply convolution matrix to each pixel
+    for (let y = 1; y < embossImage.height - 1; y++) {
+        for (let x = 1; x < embossImage.width - 1; x++) {
+            let index = (x + y * embossImage.width) * 4;
+
+            let r = 0, g = 0, b = 0;
+
+            // Apply kernel to the surrounding pixels
+            for (let ky = -1; ky <= 1; ky++) {
+                for (let kx = -1; kx <= 1; kx++) {
+                    let imgX = x + kx;
+                    let imgY = y + ky;
+                    let imgIndex = (imgX + imgY * embossImage.width) * 4;
+
+                    let weight = kernel[ky + 1][kx + 1];
+
+                    r += pixels[imgIndex] * weight;
+                    g += pixels[imgIndex + 1] * weight;
+                    b += pixels[imgIndex + 2] * weight;
+                }
+            }
+
+            // Set the new pixel values
+            embossImage.pixels[index] = constrain(r + 128, 0, 255);
+            embossImage.pixels[index + 1] = constrain(g + 128, 0, 255);
+            embossImage.pixels[index + 2] = constrain(b + 128, 0, 255);
+        }
+    }
+
+    embossImage.updatePixels();
+    return embossImage;
+}
+ -------------------- gaussianBlur.js ------------------------ 
+
+function applyGaussianBlur(inputImage) {
+    let blurImage = inputImage.get();
+    blurImage.loadPixels();
+    let pixels = blurImage.pixels;
+
+    let kernel = [
+        [1 / 16, 2 / 16, 1 / 16],
+        [2 / 16, 4 / 16, 2 / 16],
+        [1 / 16, 2 / 16, 1 / 16]
+    ];
+
+    for (let y = 1; y < blurImage.height - 1; y++) {
+        for (let x = 1; x < blurImage.width - 1; x++) {
+            let index = (x + y * blurImage.width) * 4;
+
+            let r = 0, g = 0, b = 0;
+
+            for (let ky = -1; ky <= 1; ky++) {
+                for (let kx = -1; kx <= 1; kx++) {
+                    let imgX = x + kx;
+                    let imgY = y + ky;
+                    let imgIndex = (imgX + imgY * blurImage.width) * 4;
+
+                    let weight = kernel[ky + 1][kx + 1];
+
+                    r += pixels[imgIndex] * weight;
+                    g += pixels[imgIndex + 1] * weight;
+                    b += pixels[imgIndex + 2] * weight;
+                }
+            }
+
+            blurImage.pixels[index] = constrain(r, 0, 255);
+            blurImage.pixels[index + 1] = constrain(g, 0, 255);
+            blurImage.pixels[index + 2] = constrain(b, 0, 255);
+        }
+    }
+
+    blurImage.updatePixels();
+    return blurImage;
+}
+ -------------------- glitch.js ------------------------ 
+
+function applyGlitchFilter(inputImage) {
+    let outputImage = createImage(inputImage.width, inputImage.height);
+    outputImage.copy(inputImage, 0, 0, inputImage.width, inputImage.height, 0, 0, outputImage.width, outputImage.height);
+
+    // Step 1: Randomly shift rows
+    for (let y = 0; y < outputImage.height; y += 10) {
+        let shift = int(random(-20, 20));
+        outputImage.copy(outputImage, 0, y, outputImage.width, 10, shift, y, outputImage.width, 10);
+    }
+
+    // Step 2: Randomly shift columns
+    for (let x = 0; x < outputImage.width; x += 10) {
+        let shift = int(random(-10, 10));
+        outputImage.copy(outputImage, x, 0, 10, outputImage.height, x, shift, 10, outputImage.height);
+    }
+
+    // Step 3: Add random noise
+    outputImage.loadPixels();
+    for (let i = 0; i < outputImage.pixels.length; i += 4) {
+        if (random(1) < 0.1) { // 10% chance to add noise
+            let noiseValue = int(random(-50, 50));
+            outputImage.pixels[i] += noiseValue;     // Red Channel
+            outputImage.pixels[i + 1] += noiseValue; // Green Channel
+            outputImage.pixels[i + 2] += noiseValue; // Blue Channel
+        }
+    }
+    outputImage.updatePixels();
+
+    // Step 4: Apply a final random color offset
+    let glitchRed = outputImage.get();
+    let glitchGreen = outputImage.get();
+    let glitchBlue = outputImage.get();
+
+    glitchRed.filter(THRESHOLD);
+    glitchGreen.filter(INVERT);
+    glitchBlue.filter(POSTERIZE, 5);
+
+    outputImage.blend(glitchRed, 0, 0, outputImage.width, outputImage.height, int(random(-10, 10)), int(random(-10, 10)), outputImage.width, outputImage.height, ADD);
+    outputImage.blend(glitchGreen, 0, 0, outputImage.width, outputImage.height, int(random(-5, 5)), int(random(-5, 5)), outputImage.width, outputImage.height, LIGHTEST);
+    outputImage.blend(glitchBlue, 0, 0, outputImage.width, outputImage.height, int(random(-3, 3)), int(random(-3, 3)), outputImage.width, outputImage.height, DARKEST);
+
+    return outputImage;
+}
+
+ -------------------- greyscale.js ------------------------ 
+
+// Function to convert imaging to Greyscale  
+function convertToGrayscale(inputImage) {
+    let img = createImage(inputImage.width, inputImage.height);
+    img.copy(inputImage, 0, 0, inputImage.width, inputImage.height, 0, 0, img.width, img.height);
+
+    img.loadPixels();
+    for (let i = 0; i < img.pixels.length; i += 4) {
+        let brightnessValue = red(img.pixels[i]) * 0.3 + green(img.pixels[i + 1]) * 0.59 + blue(img.pixels[i + 2]) * 0.11;
+        img.pixels[i] = brightnessValue;
+        img.pixels[i + 1] = brightnessValue;
+        img.pixels[i + 2] = brightnessValue;
+    }
+    img.updatePixels();
+
+    return img;
+}
+
+// Function to convert imaging to Pixelated
+function convertToPixelate(inputImage, pixelSize) {
+    // Clone the inputImage 
+    let pixelatedImage = inputImage.get();
+    pixelatedImage.loadPixels();
+
+    // Process block by block
+    for (let y = 0; y < pixelatedImage.height; y += pixelSize) {
+        for (let x = 0; x < pixelatedImage.width; x += pixelSize) {
+
+            let sumRed = 0;
+            let sumGreen = 0;
+            let sumBlue = 0;
+
+            // Get the sum of RGB of the processed block
+            for (let i = 0; i < pixelSize; i++) {
+                for (let j = 0; j < pixelSize; j++) {
+                    let pixelIndex = ((pixelatedImage.width * (y + j)) + (x + i)) * 4;
+                    let pixelRed = pixelatedImage.pixels[pixelIndex + 0];
+                    let pixelGreen = pixelatedImage.pixels[pixelIndex + 1];
+                    let pixelBlue = pixelatedImage.pixels[pixelIndex + 2];
+                    sumRed += pixelRed;
+                    sumGreen += pixelGreen;
+                    sumBlue += pixelBlue;
+                }
+            }
+
+            // Calculate the average of RGB of that block
+            let aveRed = sumRed / (pixelSize * pixelSize);
+            let aveGreen = sumGreen / (pixelSize * pixelSize);
+            let aveBlue = sumBlue / (pixelSize * pixelSize);
+
+            // Paint the block with the average RGB value
+            for (let i = 0; i < pixelSize; i++) {
+                for (let j = 0; j < pixelSize; j++) {
+                    let pixelIndex = ((pixelatedImage.width * (y + j)) + (x + i)) * 4;
+                    pixelatedImage.pixels[pixelIndex + 0] = aveRed;
+                    pixelatedImage.pixels[pixelIndex + 1] = aveGreen;
+                    pixelatedImage.pixels[pixelIndex + 2] = aveBlue;
+                }
+            }
+        }
+    }
+
+    // return the pixelated image
+    pixelatedImage.updatePixels();
+    return pixelatedImage;
+}
+
+ -------------------- invertedColor.js ------------------------ 
+
+function invertColors(img) {
+    let invertedImage = createImage(img.width, img.height);
+    img.loadPixels();
+    invertedImage.loadPixels();
+    for (let i = 0; i < img.pixels.length; i += 4) {
+        invertedImage.pixels[i] = 255 - img.pixels[i];     // Red
+        invertedImage.pixels[i + 1] = 255 - img.pixels[i + 1]; // Green
+        invertedImage.pixels[i + 2] = 255 - img.pixels[i + 2]; // Blue
+        invertedImage.pixels[i + 3] = img.pixels[i + 3];   // Alpha
+    }
+    invertedImage.updatePixels();
+    return invertedImage;
+}
+
+ -------------------- pixelatedExtra.js ------------------------ 
+
+function applyHeavyPixelationFilter(inputImage, pixelSize = 20) {
+    let outputImage = createImage(inputImage.width, inputImage.height);
+    outputImage.copy(inputImage, 0, 0, inputImage.width, inputImage.height, 0, 0, outputImage.width, outputImage.height);
+
+    outputImage.loadPixels(); // Load pixel data from inputImage
+    let tempPixels = []; // Temporary array for storing pixel data
+
+    // Create a temporary image to hold the pixelated version
+    let tempImage = createImage(Math.ceil(inputImage.width / pixelSize), Math.ceil(inputImage.height / pixelSize));
+    tempImage.loadPixels();
+
+    // Process each block of pixels
+    for (let y = 0; y < tempImage.height; y++) {
+        for (let x = 0; x < tempImage.width; x++) {
+            // Calculate average color for the pixel block
+            let r = 0, g = 0, b = 0;
+            let count = 0;
+            
+            for (let dy = 0; dy < pixelSize; dy++) {
+                for (let dx = 0; dx < pixelSize; dx++) {
+                    let srcX = x * pixelSize + dx;
+                    let srcY = y * pixelSize + dy;
+
+                    if (srcX < inputImage.width && srcY < inputImage.height) {
+                        let index = (srcX + srcY * inputImage.width) * 4;
+                        r += inputImage.pixels[index];
+                        g += inputImage.pixels[index + 1];
+                        b += inputImage.pixels[index + 2];
+                        count++;
+                    }
+                }
+            }
+            
+            // Average the color
+            r = r / count;
+            g = g / count;
+            b = b / count;
+
+            let tempIndex = (x + y * tempImage.width) * 4;
+            tempImage.pixels[tempIndex] = r;
+            tempImage.pixels[tempIndex + 1] = g;
+            tempImage.pixels[tempIndex + 2] = b;
+            tempImage.pixels[tempIndex + 3] = 255; // Alpha
+        }
+    }
+    
+    tempImage.updatePixels();
+
+    // Scale the temporary image back to the original size
+    outputImage.copy(tempImage, 0, 0, tempImage.width, tempImage.height, 0, 0, outputImage.width, outputImage.height);
+
+    return outputImage;
+}
+
+ -------------------- rgb.js ------------------------ 
+
+// Function to convert imaging to Red, Green and Blue Channels (without thresholding)
+function splitIntoChannels(inputImage) {
+    let r = createImage(inputImage.width, inputImage.height);
+    let g = createImage(inputImage.width, inputImage.height);
+    let b = createImage(inputImage.width, inputImage.height);
+
+    r.copy(inputImage, 0, 0, inputImage.width, inputImage.height, 0, 0, r.width, r.height);
+    g.copy(inputImage, 0, 0, inputImage.width, inputImage.height, 0, 0, g.width, g.height);
+    b.copy(inputImage, 0, 0, inputImage.width, inputImage.height, 0, 0, b.width, b.height);
+
+    r.loadPixels();
+    g.loadPixels();
+    b.loadPixels();
+
+    for (let i = 0; i < r.pixels.length; i += 4) {
+        g.pixels[i] = 0;
+        b.pixels[i] = 0;
+
+        r.pixels[i + 1] = 0;
+        b.pixels[i + 1] = 0;
+
+        r.pixels[i + 2] = 0;
+        g.pixels[i + 2] = 0;
+    }
+
+    r.updatePixels();
+    g.updatePixels();
+    b.updatePixels();
+
+    return [r, g, b];
+}
+ -------------------- rgbThresholding.js ------------------------ 
+
+// Function for black and white thresholding
+function blackAndWhiteThresholdImage(inputImage, threshold) {
+    let thresholdedImage = createImage(inputImage.width, inputImage.height);
+    thresholdedImage.copy(inputImage, 0, 0, inputImage.width, inputImage.height, 0, 0, thresholdedImage.width, thresholdedImage.height);
+
+    thresholdedImage.loadPixels();
+    for (let i = 0; i < thresholdedImage.pixels.length; i += 4) {
+        let pixelRed = thresholdedImage.pixels[i];
+        let pixelGreen = thresholdedImage.pixels[i + 1];
+        let pixelBlue = thresholdedImage.pixels[i + 2];
+
+        // Calculate grayscale value using the formula: 0.299 * R + 0.587 * G + 0.114 * B
+        let grayscaleValue = 0.299 * pixelRed + 0.587 * pixelGreen + 0.114 * pixelBlue;
+
+        // Set the pixel to black (0) or white (255) based on the thresholding
+        let newColor = (grayscaleValue > threshold) ? 255 : 0;
+
+        // Updating color channels with the new color
+        thresholdedImage.pixels[i] = newColor;
+        thresholdedImage.pixels[i + 1] = newColor;
+        thresholdedImage.pixels[i + 2] = newColor;
+
+        // Setting the alpha channel to the original alpha value
+        thresholdedImage.pixels[i + 3] = thresholdedImage.pixels[i + 3];
+    }
+    thresholdedImage.updatePixels();
+
+    return thresholdedImage;
+}
+
+// Function to Thresholding depths 
+function applyThreshold(inputImage, threshold) {
+    let thresholdedImage = createImage(inputImage.width, inputImage.height);
+    thresholdedImage.copy(inputImage, 0, 0, inputImage.width, inputImage.height, 0, 0, thresholdedImage.width, thresholdedImage.height);
+
+    thresholdedImage.loadPixels();
+    for (let i = 0; i < thresholdedImage.pixels.length; i += 4) {
+        let pixelRed = thresholdedImage.pixels[i];
+        let pixelGreen = thresholdedImage.pixels[i + 1];
+        let pixelBlue = thresholdedImage.pixels[i + 2];
+
+        // Thresholding for R channel
+        pixelRed = (redSlider.value() > pixelRed) ? 0 : pixelRed;
+
+        // Thresholding for G channel
+        pixelGreen = (greenSlider.value() > pixelGreen) ? 0 : pixelGreen;
+
+        // Thresholding for B channel
+        pixelBlue = (blueSlider.value() > pixelBlue) ? 0 : pixelBlue;
+
+        // Update the pixels with thresholded values
+        thresholdedImage.pixels[i] = pixelRed;
+        thresholdedImage.pixels[i + 1] = pixelGreen;
+        thresholdedImage.pixels[i + 2] = pixelBlue;
+
+        // Setting the alpha channel to the original alpha value
+        thresholdedImage.pixels[i + 3] = thresholdedImage.pixels[i + 3];
+    }
+    thresholdedImage.updatePixels();
+
+    return thresholdedImage;
+}
+ -------------------- sepiaFilter.js ------------------------ 
+
+function applySepia(img) {
+    let sepiaImage = createImage(img.width, img.height);
+    sepiaImage.loadPixels();
+    img.loadPixels();
+
+    for (let i = 0; i < img.pixels.length; i += 4) {
+        let r = img.pixels[i];
+        let g = img.pixels[i + 1];
+        let b = img.pixels[i + 2];
+
+        sepiaImage.pixels[i] = r * 0.393 + g * 0.769 + b * 0.189;
+        sepiaImage.pixels[i + 1] = r * 0.349 + g * 0.686 + b * 0.168;
+        sepiaImage.pixels[i + 2] = r * 0.272 + g * 0.534 + b * 0.131;
+        sepiaImage.pixels[i + 3] = img.pixels[i + 3]; // Alpha channel
+    }
+
+    sepiaImage.updatePixels();
+    return sepiaImage;
+}
+
+ -------------------- sketch.js ------------------------ 
+
+// Declaring global variables
+let video;
+let canvasList = [];
+// Capture buttons
+let unfreezeButton;
+let isCapturing = false;
+let capturedImage;
+// Sliders to control thresholding
+let redSlider, greenSlider, blueSlider;
+let tcbrThresholdSlider;
+let hsvThresholdSlider;
+// Face detection
+let faceCanvas;
+let detections = [];
+let faceapi;
+
+//Others
+let pixelSize = 5;
+let faceReplacementIndex = 0;
+
+// Image captions for grid
+let captions = [
+    ["Original Image", "Grayscale Image", "Pixelated Image", "Red Channel", "Green Channel", "Blue Channel", "Red Thresholded", "Green Thresholded", "Blue Thresholded", "B&W Thresholded", "TCbCr Image", "HSV Image", "Threshold TCbCr", "Threshold HSV","Sepia Image","Inverted","Emboss","Gaussian Blur","Aesthetic","Hacked","Vignette","Enhanced Pixelation","Halftone","Color Shifting"]
+];
+
+function setup() {
+    createCanvas(160 * 4, 140 * 6);
+    
+    //Creating the video and setting the size for each grid 
+    video = createCapture(VIDEO, function () {
+        video.size(160, 120);
+        for (let i = 0; i < 4 * 5; i++) {
+            canvasList.push(createGraphics(160, 120));
+        }
+         // Initialize sliders
+        pixelationSlider = select('#pixelationSlider');
+        halftoneSlider = select('#halftoneSlider');
+        colorShiftSlider = select('#colorShiftSlider');
+        
+        // Save Image button
+         let saveImageButton = select('#saveImageButton');
+         saveImageButton.mousePressed(saveImage);
+
+        // Capture button
+        let captureButton = select('#captureButton');
+        captureButton.mousePressed(captureAndApplyFilters);
+
+        // Uncapture Button
+        let unfreezeButton = select('#unfreezeButton');
+        unfreezeButton.mousePressed(uncaptureAndUnfreeze);
+
+    // Create a container for top sliders
+    let topSliderContainer = select('#topSliderContainer');
+    topSliderContainer.class('slider-container');
+    // Slider intensity
+    redSlider = createSlider(0, 180, 90);
+    greenSlider = createSlider(0, 180, 90);
+    blueSlider = createSlider(0, 180, 90);
+
+    topSliderContainer.child(redSlider);
+    topSliderContainer.child(greenSlider);
+    topSliderContainer.child(blueSlider);
+
+    // Create a container for bottom sliders
+    let bottomSliderContainer = select('#bottomSliderContainer');
+    bottomSliderContainer.class('slider-container');
+    // Slider intensity
+    tcbrThresholdSlider = createSlider(0, 255, 90);
+    hsvThresholdSlider = createSlider(0, 255, 90);
+
+    bottomSliderContainer.child(tcbrThresholdSlider);
+    bottomSliderContainer.child(hsvThresholdSlider);
+
+    faceCanvas = createGraphics(160, 120);
+        const faceOptions = {
+            withLandmarks: true,
+            withExpressions: true,
+            withDescriptors: true,
+            minConfidence: 0.5
+          };
+
+        //Hide the video
+        video.hide();
+
+    });
+
+
+    // Activate capture button with "C" key press
+    window.addEventListener('keydown', function (e) {
+        if (e.key === 'c' || e.key === 'C') {
+            captureAndApplyFilters();
+        }
+    });
+
+    // Activate uncapture button with "V" key press
+    window.addEventListener('keydown', function (e) {
+        if (e.key === 'v' || e.key === 'V') {
+            uncaptureAndUnfreeze();
+        }
+    });
+
+    // Activate save image button with "V" key press
+    window.addEventListener('keydown', function (e) {
+        if (e.key === 's' || e.key === 'S') {
+            saveImage();
+        }
+    });    
+}
+draw();
+
+function draw() {
+    background(255);
+    if (video.loadedmetadata) {
+        let scaledImage = createImage(160, 120);
+        scaledImage.copy(video, 0, 0, video.width, video.height, 0, 0, scaledImage.width, scaledImage.height);
+
+        // Row 0
+        displayImage(scaledImage, 0, 0, captions[0][0]);  // Original
+        displayImage(convertToGrayscale(scaledImage), 1, 0, captions[0][1]);  // Grayscale
+        displayImage(convertToPixelate(scaledImage, pixelSize), 2, 0, captions[0][2]);  // Pixelated
+        displayImage(splitIntoChannels(scaledImage)[0], 3, 0, captions[0][3]);  // Red Channel
+        
+        // Row 1
+        displayImage(splitIntoChannels(scaledImage)[1], 0, 1, captions[0][4]);  // Green Channel
+        displayImage(splitIntoChannels(scaledImage)[2], 1, 1, captions[0][5]);  // Blue Channel
+        displayImage(applyThreshold(splitIntoChannels(scaledImage)[0], redSlider.value()), 2, 1, captions[0][6]);  // Red Thresholded
+        displayImage(applyThreshold(splitIntoChannels(scaledImage)[1], greenSlider.value()), 3, 1, captions[0][7]);  // Green Thresholded
+        
+        // Row 2
+        displayImage(applyThreshold(splitIntoChannels(scaledImage)[2], blueSlider.value()), 0, 2, captions[0][8]);  // Blue Thresholded
+        displayImage(blackAndWhiteThresholdImage(scaledImage, 128), 1, 2, captions[0][9]);  // B&W Thresholded
+        displayImage(convertToTCbCr(scaledImage), 2, 2, captions[0][10]);  // TCbCr Image
+        displayImage(convertToHSV(scaledImage), 3, 2, captions[0][11]);  // HSV Image
+        
+        // Row 3
+        displayImage(tcbrImageThreshold(scaledImage, tcbrThresholdSlider.value()), 0, 3, captions[0][12]);  // TCbCr Thresholded
+        displayImage(hsvImageThreshold(scaledImage, hsvThresholdSlider.value()), 1, 3, captions[0][13]);  // HSV Thresholded
+        displayImage(applySepia(scaledImage), 2, 3, captions[0][14]);  // Sepia Image
+        displayImage(invertColors(scaledImage), 3, 3, captions[0][15]); // Inverted Colors
+
+        // Row 4
+        displayImage(applyEmbossEffect(scaledImage), 0, 4, captions[0][16]); // Emboss Effect
+        displayImage(applyGaussianBlur(scaledImage), 1, 4, captions[0][17]); //Gaussian Blur
+        displayImage(applyAestheticFilter(scaledImage),2,4,captions[0][18]); //Aesthetic
+        displayImage(applyGlitchFilter(scaledImage), 3, 4, captions[0][19]); //Hacked
+        //Row 5
+        displayImage(applyVignetteFilter(scaledImage), 0, 5, captions[0][20]); //Vignette
+        displayImage(applyHeavyPixelationFilter(scaledImage, pixelationSlider.value()), 1, 5, captions[0][21]);  //Heavy Pixelation
+        displayImage(applyColorHalftoneFilter(scaledImage, halftoneSlider.value()), 2, 5, captions[0][22]); // Color Halftone
+        displayImage(applyColorShiftingFilter(scaledImage, colorShiftSlider.value()), 3, 5, captions[0][23]); //Color Shifting
+    }
+}
+
+
+
+
+function displayImage(img, col, row, caption) {
+    let index = row * 3 + col;
+
+    // Clear the canvas before drawing the new image
+    canvasList[index].clear();
+
+    let x = col * 0;
+    let y = row * 0;
+    // Draw the image on the canvas
+    canvasList[index].image(img, 0, 0, 158, 118); // Leave 1-pixel border
+
+    // Draw the caption array
+    let captionX = x + 160 / 2; 
+    let captionY = y + 120 - 5; 
+    canvasList[index].textAlign(CENTER);
+    canvasList[index].textSize(10);
+    canvasList[index].fill(255);
+    canvasList[index].text(caption, captionX, captionY);
+
+    // Draw the canvas on the main canvas
+    image(canvasList[index], col * 160, row * 140);
+}
+
+
+
+function captureAndApplyFilters() {
+    if (!isCapturing) {
+        // Pause the video to capture the current frame
+        video.pause();
+
+        // Loop through all the grids
+        for (let row = 0; row < 5; row++) {
+            for (let col = 0; col < 3; col++) {
+                if (col !== 2) {
+                    let capturedImage = canvasList[row * 3 + col].get();
+                }
+            }
+        }
+
+        // Set capturing to true
+        isCapturing = true;
+    } else {
+        // Resume the video after resetting frames
+        video.play();
+        for (let i = 0; i < canvasList.length; i++) {
+            if (canvasList[i]) {
+                canvasList[i].clear();
+            }
+        }
+
+        // Set capturing to false
+        isCapturing = false;
+    }
+}
+
+function uncaptureAndUnfreeze() {
+    // Resume the video after resetting frames
+    video.play();
+
+    // Clear the canvasList
+    for (let i = 0; i < canvasList.length; i++) {
+        if (canvasList[i]) {
+            canvasList[i].clear();
+        }
+    }
+
+    // Set capturing to false
+    isCapturing = false;
+
+    // Unfreeze the video
+    unfreeze();
+}
+
+
+function unfreeze() {
+    video.loop(); 
+}
+
+function saveImage() {
+    // Call video pause to get the frame
+    video.pause();
+
+    // Create a graphics object to hold the entire grid
+    let fullGridImage = createGraphics(width, height);
+
+// Loop through all the grids to capture all the grid
+for (let row = 0; row < 5; row++) {
+    for (let col = 0; col < 3; col++) {
+        let capturedImage = canvasList[row * 3 + col].get();
+        fullGridImage.image(capturedImage, col * 160, row * 140);
+    }
+}
+    // Save the full grid image as a file
+    fullGridImage.save("full_grid_image.png");
+    video.play();
+}
+
+ -------------------- vignette.js ------------------------ 
+
+function applyVignetteFilter(inputImage) {
+    let outputImage = createImage(inputImage.width, inputImage.height);
+    outputImage.copy(inputImage, 0, 0, inputImage.width, inputImage.height, 0, 0, outputImage.width, outputImage.height);
+
+    outputImage.loadPixels();
+    let centerX = outputImage.width / 2;
+    let centerY = outputImage.height / 2;
+    let maxDist = dist(0, 0, centerX, centerY);
+    let vignetteStrength = 0.75; // Adjust strength of vignette effect
+
+    for (let y = 0; y < outputImage.height; y++) {
+        for (let x = 0; x < outputImage.width; x++) {
+            let d = dist(x, y, centerX, centerY);
+            let factor = constrain(d / maxDist, 0, 1);
+            let index = (x + y * outputImage.width) * 4;
+            
+            // Calculate vignette effect
+            let vignetteFactor = 1 - Math.pow(factor, 2) * vignetteStrength;
+            
+            outputImage.pixels[index] *= vignetteFactor;     // Red Channel
+            outputImage.pixels[index + 1] *= vignetteFactor; // Green Channel
+            outputImage.pixels[index + 2] *= vignetteFactor; // Blue Channel
+        }
+    }
+    outputImage.updatePixels();
+
+    return outputImage;
+}
