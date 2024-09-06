@@ -70,14 +70,3 @@ To add a new filter:
 2. **Implement the Filter Function**: Define a function that takes an input image and applies the filter effect. Ensure the function is properly tested.
 3. **Integrate with Main Code**: Import your filter function into the main JavaScript file (`main.js`) and add it to the filter list.
 4. **Update Captions**: Update the `captions` array in the main code to include a description of the new filter.
-
-Example of adding a new filter:
-
-1. Create `newFilter.js` in the `filters` directory:
-
-   ```javascript
-   function applyNewFilter(inputImage) {
-       let outputImage = createImage(inputImage.width, inputImage.height);
-       // Apply filter logic here
-       return outputImage;
-   }
