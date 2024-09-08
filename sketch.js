@@ -1,25 +1,24 @@
 // Declaring global variables
 let videoStream;
-let canvasList = [];
+let canvasArray = [];
 // Capture buttons
-let unfreezeButton;
-let isCapturing = false;
-let capturedImage;
+let unFreeze;
+let capturing = false;
+let frozenImage;
 // Sliders to control thresholding
-let redSlider, greenSlider, blueSlider;
+let redThresholdSlider, greenThresholdSlider, blueThresholdSlider;
 let tcbrThresholdSlider;
 let hsvThresholdSlider;
 // Face detection
-let faceCanvas;
-let detections = [];
-let faceapi;
+let detectionCanvas;
+let detectedFaces = [];
 
 //Others
-let pixelSize = 5;
-let faceReplacementIndex = 0;
+let pixelBlockSize = 5;
+let currentFaceIndex = 0;
 
-// Image captions for grid
-let captions = [
+// Image imageCaptions for grid
+let imageCaptions = [
     ["Original", "Grayscale", "Pixelated", "Red Channel", "Green Channel", "Blue Channel", "Red Thresholded", "Green Thresholded", "Blue Thresholded", "B&W Thresholded", "TCbCr", "HSV", "Threshold TCbCr", "Threshold HSV","Sepia","Inverted","Emboss","Gaussian Blur","Aesthetic","Hacked","Vignette","Enhanced Pixelation","Halftone","Color Shifting","TimeWarp"]
 ];
 
@@ -30,7 +29,7 @@ function setup() {
     videoStream = createCapture(VIDEO, function () {
         videoStream.size(160, 120);
         for (let i = 0; i < 4 * 5; i++) {
-            canvasList.push(createGraphics(160, 120));
+            canvasArray.push(createGraphics(160, 120));
         }
          // Initialize sliders
         pixelationSlider = select('#pixelationSlider');
@@ -49,20 +48,20 @@ function setup() {
         captureButton.mousePressed(captureAndApplyFilters);
 
         // Uncapture Button
-        let unfreezeButton = select('#unfreezeButton');
-        unfreezeButton.mousePressed(uncaptureAndUnfreeze);
+        let unFreeze = select('#unFreeze');
+        unFreeze.mousePressed(uncaptureAndUnfreeze);
 
     // Create a container for top sliders
     let topSliderContainer = select('#topSliderContainer');
     topSliderContainer.class('slider-container');
     // Slider intensity
-    redSlider = createSlider(0, 180, 90);
-    greenSlider = createSlider(0, 180, 90);
-    blueSlider = createSlider(0, 180, 90);
+    redThresholdSlider = createSlider(0, 180, 90);
+    greenThresholdSlider = createSlider(0, 180, 90);
+    blueThresholdSlider = createSlider(0, 180, 90);
 
-    topSliderContainer.child(redSlider);
-    topSliderContainer.child(greenSlider);
-    topSliderContainer.child(blueSlider);
+    topSliderContainer.child(redThresholdSlider);
+    topSliderContainer.child(greenThresholdSlider);
+    topSliderContainer.child(blueThresholdSlider);
 
     // Create a container for bottom sliders
     let bottomSliderContainer = select('#bottomSliderContainer');
@@ -74,7 +73,7 @@ function setup() {
     bottomSliderContainer.child(tcbrThresholdSlider);
     bottomSliderContainer.child(hsvThresholdSlider);
 
-    faceCanvas = createGraphics(160, 120);
+    detectionCanvas = createGraphics(160, 120);
         const faceOptions = {
             withLandmarks: true,
             withExpressions: true,
@@ -118,42 +117,42 @@ function draw() {
         scaledImage.copy(videoStream, 0, 0, videoStream.width, videoStream.height, 0, 0, scaledImage.width, scaledImage.height);
 
       
-        displayImage(scaledImage, 0, 0, captions[0][0]);  // Original
-        displayImage(grayscaleConversion(scaledImage), 1, 0, captions[0][1]);  // Grayscale
+        displayImage(scaledImage, 0, 0, imageCaptions[0][0]);  // Original
+        displayImage(grayscaleConversion(scaledImage), 1, 0, imageCaptions[0][1]);  // Grayscale
         
-        displayImage(separateRGBChannels(scaledImage)[0], 0, 1, captions[0][3]);  // Red Channel
+        displayImage(separateRGBChannels(scaledImage)[0], 0, 1, imageCaptions[0][3]);  // Red Channel
         
        
-        displayImage(separateRGBChannels(scaledImage)[1], 1, 1, captions[0][4]);  // Green Channel
-        displayImage(separateRGBChannels(scaledImage)[2], 2, 1, captions[0][5]);  // Blue Channel
-        displayImage(applyColorChannelThreshold(separateRGBChannels(scaledImage)[0], redSlider.value()), 0, 2, captions[0][6]);  // Red Thresholded
-        displayImage(applyColorChannelThreshold(separateRGBChannels(scaledImage)[1], greenSlider.value()), 1, 2, captions[0][7]);  // Green Thresholded
+        displayImage(separateRGBChannels(scaledImage)[1], 1, 1, imageCaptions[0][4]);  // Green Channel
+        displayImage(separateRGBChannels(scaledImage)[2], 2, 1, imageCaptions[0][5]);  // Blue Channel
+        displayImage(applyColorChannelThreshold(separateRGBChannels(scaledImage)[0], redThresholdSlider.value()), 0, 2, imageCaptions[0][6]);  // Red Thresholded
+        displayImage(applyColorChannelThreshold(separateRGBChannels(scaledImage)[1], greenThresholdSlider.value()), 1, 2, imageCaptions[0][7]);  // Green Thresholded
         
      
-        displayImage(applyColorChannelThreshold(separateRGBChannels(scaledImage)[2], blueSlider.value()), 2, 2, captions[0][8]);  // Blue Thresholded
-        displayImage(applyBWThreshold(scaledImage, 128), 3, 2, captions[0][9]);  // B&W Thresholded
-        displayImage(convertToTCbCr(scaledImage), 0, 3, captions[0][10]);  // TCbCr Image
-        displayImage(convertToHSV(scaledImage), 1, 3, captions[0][11]);  // HSV Image
+        displayImage(applyColorChannelThreshold(separateRGBChannels(scaledImage)[2], blueThresholdSlider.value()), 2, 2, imageCaptions[0][8]);  // Blue Thresholded
+        displayImage(applyBWThreshold(scaledImage, 128), 3, 2, imageCaptions[0][9]);  // B&W Thresholded
+        displayImage(convertToTCbCr(scaledImage), 0, 3, imageCaptions[0][10]);  // TCbCr Image
+        displayImage(convertToHSV(scaledImage), 1, 3, imageCaptions[0][11]);  // HSV Image
         
      
-        displayImage(applyTCbCrThreshold(scaledImage, tcbrThresholdSlider.value()), 2, 3, captions[0][12]);  // TCbCr Thresholded
-        displayImage(applyHSVThreshold(scaledImage, hsvThresholdSlider.value()), 3, 3, captions[0][13]);  // HSV Thresholded
+        displayImage(applyTCbCrThreshold(scaledImage, tcbrThresholdSlider.value()), 2, 3, imageCaptions[0][12]);  // TCbCr Thresholded
+        displayImage(applyHSVThreshold(scaledImage, hsvThresholdSlider.value()), 3, 3, imageCaptions[0][13]);  // HSV Thresholded
         
-        displayImage(applyTimeWarpFilter(scaledImage, timeWarpSlider), 0, 4, captions[0][24]);  // Time Warp     
-        displayImage(pixelateImage(scaledImage, pixelSize), 1, 4, captions[0][2]);  // Pixelated
-        displayImage(applySepia(scaledImage), 2, 4, captions[0][14]);  // Sepia Image
-        displayImage(invertColors(scaledImage), 3, 4, captions[0][15]); // Inverted Colors
+        displayImage(applyTimeWarpFilter(scaledImage, timeWarpSlider), 0, 4, imageCaptions[0][24]);  // Time Warp     
+        displayImage(pixelateImage(scaledImage, pixelBlockSize), 1, 4, imageCaptions[0][2]);  // Pixelated
+        displayImage(applySepia(scaledImage), 2, 4, imageCaptions[0][14]);  // Sepia Image
+        displayImage(invertColors(scaledImage), 3, 4, imageCaptions[0][15]); // Inverted Colors
 
       
-        displayImage(applyEmbossEffect(scaledImage), 0, 5, captions[0][16]); // Emboss Effect
-        displayImage(applyGaussianBlur(scaledImage), 1, 5, captions[0][17]); //Gaussian Blur
-        displayImage(applyAestheticFilter(scaledImage),2,5,captions[0][18]); //Aesthetic
-        displayImage(applyGlitchFilter(scaledImage), 3, 5, captions[0][19]); //Hacked
+        displayImage(applyEmbossEffect(scaledImage), 0, 5, imageCaptions[0][16]); // Emboss Effect
+        displayImage(applyGaussianBlur(scaledImage), 1, 5, imageCaptions[0][17]); //Gaussian Blur
+        displayImage(applyAestheticFilter(scaledImage),2,5,imageCaptions[0][18]); //Aesthetic
+        displayImage(applyGlitchFilter(scaledImage), 3, 5, imageCaptions[0][19]); //Hacked
        
-        displayImage(applyVignetteFilter(scaledImage), 0, 6, captions[0][20]); //Vignette
-        displayImage(applyHeavyPixelationFilter(scaledImage, pixelationSlider.value()), 1, 6, captions[0][21]);  //Heavy Pixelation
-        displayImage(applyColorHalftoneFilter(scaledImage, halftoneSlider.value()), 2, 6, captions[0][22]); // Color Halftone
-        displayImage(applyColorShiftingFilter(scaledImage, colorShiftSlider.value()), 3, 6, captions[0][23]); //Color Shifting
+        displayImage(applyVignetteFilter(scaledImage), 0, 6, imageCaptions[0][20]); //Vignette
+        displayImage(applyHeavyPixelationFilter(scaledImage, pixelationSlider.value()), 1, 6, imageCaptions[0][21]);  //Heavy Pixelation
+        displayImage(applyColorHalftoneFilter(scaledImage, halftoneSlider.value()), 2, 6, imageCaptions[0][22]); // Color Halftone
+        displayImage(applyColorShiftingFilter(scaledImage, colorShiftSlider.value()), 3, 6, imageCaptions[0][23]); //Color Shifting
     }
 }
 
@@ -164,29 +163,29 @@ function displayImage(img, col, row, caption) {
     let index = row * 2 + col;
 
     // Clear the canvas before drawing the new image
-    canvasList[index].clear();
+    canvasArray[index].clear();
 
     let x = col * 0;
     let y = row * 0;
     // Draw the image on the canvas
-    canvasList[index].image(img, 0, 0, 158, 118); // Leave 1-pixel border
+    canvasArray[index].image(img, 0, 0, 158, 118); // Leave 1-pixel border
 
     // Draw the caption array
     let captionX = x + 160 / 2; 
     let captionY = y + 120 - 5; 
-    canvasList[index].textAlign(CENTER);
-    canvasList[index].textSize(10);
-    canvasList[index].fill(255);
-    canvasList[index].text(caption, captionX, captionY);
+    canvasArray[index].textAlign(CENTER);
+    canvasArray[index].textSize(10);
+    canvasArray[index].fill(255);
+    canvasArray[index].text(caption, captionX, captionY);
 
     // Draw the canvas on the main canvas
-    image(canvasList[index], col * 160, row * 140);
+    image(canvasArray[index], col * 160, row * 140);
 }
 
 
 
 function captureAndApplyFilters() {
-    if (!isCapturing) {
+    if (!capturing) {
         // Pause the videoStream to capture the current frame
         videoStream.pause();
 
@@ -194,24 +193,24 @@ function captureAndApplyFilters() {
         for (let row = 0; row < 5; row++) {
             for (let col = 0; col < 3; col++) {
                 if (col !== 2) {
-                    let capturedImage = canvasList[row * 3 + col].get();
+                    let frozenImage = canvasArray[row * 3 + col].get();
                 }
             }
         }
 
         // Set capturing to true
-        isCapturing = true;
+        capturing = true;
     } else {
         // Resume the videoStream after resetting frames
         videoStream.play();
-        for (let i = 0; i < canvasList.length; i++) {
-            if (canvasList[i]) {
-                canvasList[i].clear();
+        for (let i = 0; i < canvasArray.length; i++) {
+            if (canvasArray[i]) {
+                canvasArray[i].clear();
             }
         }
 
         // Set capturing to false
-        isCapturing = false;
+        capturing = false;
     }
 }
 
@@ -219,15 +218,15 @@ function uncaptureAndUnfreeze() {
     // Resume the videoStream after resetting frames
     videoStream.play();
 
-    // Clear the canvasList
-    for (let i = 0; i < canvasList.length; i++) {
-        if (canvasList[i]) {
-            canvasList[i].clear();
+    // Clear the canvasArray
+    for (let i = 0; i < canvasArray.length; i++) {
+        if (canvasArray[i]) {
+            canvasArray[i].clear();
         }
     }
 
     // Set capturing to false
-    isCapturing = false;
+    capturing = false;
 
     // Unfreeze the videoStream
     unfreeze();
@@ -248,8 +247,8 @@ function saveImage() {
 // Loop through all the grids to capture all the grid
 for (let row = 0; row < 8; row++) {
     for (let col = 0; col < 4; col++) {
-        let capturedImage = canvasList[row * 2 + col].get();
-        fullGridImage.image(capturedImage, col * 160, row * 140);
+        let frozenImage = canvasArray[row * 2 + col].get();
+        fullGridImage.image(frozenImage, col * 160, row * 140);
     }
 }
     // Save the full grid image as a file

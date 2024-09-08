@@ -40,9 +40,9 @@ function applyColorChannelThreshold(inputImage, threshold) {
         let b = colorThresholdedImg.pixels[i + 2];
 
         // Apply thresholds to each channel using sliders
-        r = (redSlider.value() > r) ? 0 : r;
-        g = (greenSlider.value() > g) ? 0 : g;
-        b = (blueSlider.value() > b) ? 0 : b;
+        r = (redThresholdSlider.value() > r) ? 0 : r;
+        g = (greenThresholdSlider.value() > g) ? 0 : g;
+        b = (blueThresholdSlider.value() > b) ? 0 : b;
 
         // Set thresholded values to pixels
         colorThresholdedImg.pixels[i] = r;
