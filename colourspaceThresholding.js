@@ -1,47 +1,48 @@
-// Function for Coloured Thresholding Image
-function applyThresholdColourSpace(inputImage, threshold, thresholdSlider) {
-    let thresholdedImage = createImage(inputImage.width, inputImage.height);
-    thresholdedImage.copy(inputImage, 0, 0, inputImage.width, inputImage.height, 0, 0, thresholdedImage.width, thresholdedImage.height);
+function applyThresholdToColorSpace(sourceImage, thresholdValue, slider) {
+    let resultImage = createImage(sourceImage.width, sourceImage.height);
+    resultImage.copy(sourceImage, 0, 0, sourceImage.width, sourceImage.height, 0, 0, resultImage.width, resultImage.height);
 
-    thresholdedImage.loadPixels();
-    for (let i = 0; i < thresholdedImage.pixels.length; i += 4) {
-        let pixelRed = thresholdedImage.pixels[i];
-        let pixelGreen = thresholdedImage.pixels[i + 1];
-        let pixelBlue = thresholdedImage.pixels[i + 2];
+    resultImage.loadPixels();
+    for (let i = 0; i < resultImage.pixels.length; i += 4) {
+        let redChannel = resultImage.pixels[i];
+        let greenChannel = resultImage.pixels[i + 1];
+        let blueChannel = resultImage.pixels[i + 2];
 
-        // Calculate intensity of thresholding
-        let intensity = calculateIntensity(pixelRed, pixelGreen, pixelBlue);
+        // Compute the intensity based on RGB values
+        let colorIntensity = calculateColorIntensity(redChannel, greenChannel, blueChannel);
 
-        // Adjust the intensity based on slider
-        intensity = (thresholdSlider.value() > intensity) ? 0 : intensity;
+        // Apply threshold based on slider position
+        colorIntensity = (slider.value() > colorIntensity) ? 0 : colorIntensity;
 
-        // Update each channel with thresholded values
-        thresholdedImage.pixels[i] = pixelRed * (intensity / 255); // Red channel
-        thresholdedImage.pixels[i + 1] = pixelGreen * (intensity / 255); // Green channel
-        thresholdedImage.pixels[i + 2] = pixelBlue * (intensity / 255); // Blue channel
+        // Set the new pixel values after thresholding
+        resultImage.pixels[i] = redChannel * (colorIntensity / 255);    // Red
+        resultImage.pixels[i + 1] = greenChannel * (colorIntensity / 255); // Green
+        resultImage.pixels[i + 2] = blueChannel * (colorIntensity / 255);  // Blue
 
-        thresholdedImage.pixels[i + 3] = thresholdedImage.pixels[i + 3];
+        // Keep the alpha channel unchanged
+        resultImage.pixels[i + 3] = resultImage.pixels[i + 3];
     }
-    thresholdedImage.updatePixels();
+    resultImage.updatePixels();
 
-    return thresholdedImage;
+    return resultImage;
 }
 
-function calculateIntensity(red, green, blue) {
-    // Calculate intensity 
-    return (red + green + blue) / 1.7;
+function calculateColorIntensity(r, g, b) {
+    // Calculate intensity from RGB values
+    return (r + g + b) / 1.7;
 }
 
-function tcbrImageThreshold(inputImage) {
-    let tcbrThreshold = tcbrThresholdSlider.value(); 
-    let tcbrImage = convertToTCbCr(inputImage);
-    let thresholdedImage = applyThresholdColourSpace(tcbrImage, tcbrThreshold, tcbrThresholdSlider);
-    return thresholdedImage;
+function applyTCbCrThreshold(sourceImage) {
+    let thresholdValue = tcbrThresholdSlider.value(); 
+    let tcbrConvertedImage = convertToTCbCr(sourceImage); 
+    let thresholdedResult = applyThresholdToColorSpace(tcbrConvertedImage, thresholdValue, tcbrThresholdSlider);
+    return thresholdedResult;
 }
 
-function hsvImageThreshold(inputImage) {
-    let hsvThreshold = hsvThresholdSlider.value(); 
-    let hsvImage = convertToHSV(inputImage);
-    let thresholdedImage = applyThresholdColourSpace(hsvImage, hsvThreshold, hsvThresholdSlider);
-    return thresholdedImage;
+function applyHSVThreshold(sourceImage) {
+    let hsvThresholdValue = hsvThresholdSlider.value(); 
+    let hsvConvertedImage = convertToHSV(sourceImage); 
+    let thresholdedResult = applyThresholdToColorSpace(hsvConvertedImage, hsvThresholdValue, hsvThresholdSlider);
+    return thresholdedResult;
 }
+

@@ -1,33 +1,35 @@
-function splitIntoChannels(inputImage) {
-    let redChannel = createImage(inputImage.width, inputImage.height);
-    let greenChannel = createImage(inputImage.width, inputImage.height);
-    let blueChannel = createImage(inputImage.width, inputImage.height);
+function separateRGBChannels(sourceImage) {
+    // Create separate images for red, green, and blue channels
+    let redImg = createImage(sourceImage.width, sourceImage.height);
+    let greenImg = createImage(sourceImage.width, sourceImage.height);
+    let blueImg = createImage(sourceImage.width, sourceImage.height);
 
-    redChannel.copy(inputImage, 0, 0, inputImage.width, inputImage.height, 0, 0, redChannel.width, redChannel.height);
-    greenChannel.copy(inputImage, 0, 0, inputImage.width, inputImage.height, 0, 0, greenChannel.width, greenChannel.height);
-    blueChannel.copy(inputImage, 0, 0, inputImage.width, inputImage.height, 0, 0, blueChannel.width, blueChannel.height);
+    redImg.copy(sourceImage, 0, 0, sourceImage.width, sourceImage.height, 0, 0, redImg.width, redImg.height);
+    greenImg.copy(sourceImage, 0, 0, sourceImage.width, sourceImage.height, 0, 0, greenImg.width, greenImg.height);
+    blueImg.copy(sourceImage, 0, 0, sourceImage.width, sourceImage.height, 0, 0, blueImg.width, blueImg.height);
 
-    redChannel.loadPixels();
-    greenChannel.loadPixels();
-    blueChannel.loadPixels();
+    redImg.loadPixels();
+    greenImg.loadPixels();
+    blueImg.loadPixels();
 
-    for (let i = 0; i < redChannel.pixels.length; i += 4) {
-        // Isolate the red channel
-        greenChannel.pixels[i] = 0;
-        blueChannel.pixels[i] = 0;
+    // Loop through pixels and modify channels
+    for (let i = 0; i < redImg.pixels.length; i += 4) {
+        // Keep only red in redImg
+        greenImg.pixels[i] = 0;
+        blueImg.pixels[i] = 0;
 
-        // Isolate the green channel
-        redChannel.pixels[i + 1] = 0;
-        blueChannel.pixels[i + 1] = 0;
+        // Keep only green in greenImg
+        redImg.pixels[i + 1] = 0;
+        blueImg.pixels[i + 1] = 0;
 
-        // Isolate the blue channel
-        redChannel.pixels[i + 2] = 0;
-        greenChannel.pixels[i + 2] = 0;
+        // Keep only blue in blueImg
+        redImg.pixels[i + 2] = 0;
+        greenImg.pixels[i + 2] = 0;
     }
 
-    redChannel.updatePixels();
-    greenChannel.updatePixels();
-    blueChannel.updatePixels();
+    redImg.updatePixels();
+    greenImg.updatePixels();
+    blueImg.updatePixels();
 
-    return [redChannel, greenChannel, blueChannel];
+    return [redImg, greenImg, blueImg];
 }

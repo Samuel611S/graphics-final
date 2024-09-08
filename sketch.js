@@ -1,5 +1,5 @@
 // Declaring global variables
-let video;
+let videoStream;
 let canvasList = [];
 // Capture buttons
 let unfreezeButton;
@@ -26,9 +26,9 @@ let captions = [
 function setup() {
     createCanvas(160 * 4, 140 * 7);
     
-    //Creating the video and setting the size for each grid 
-    video = createCapture(VIDEO, function () {
-        video.size(160, 120);
+    //Creating the videoStream and setting the size for each grid 
+    videoStream = createCapture(VIDEO, function () {
+        videoStream.size(160, 120);
         for (let i = 0; i < 4 * 5; i++) {
             canvasList.push(createGraphics(160, 120));
         }
@@ -82,8 +82,8 @@ function setup() {
             minConfidence: 0.5
           };
 
-        //Hide the video
-        video.hide();
+        //Hide the videoStream
+        videoStream.hide();
 
     });
 
@@ -113,34 +113,34 @@ draw();
 
 function draw() {
     background(255);
-    if (video.loadedmetadata) {
+    if (videoStream.loadedmetadata) {
         let scaledImage = createImage(160, 120);
-        scaledImage.copy(video, 0, 0, video.width, video.height, 0, 0, scaledImage.width, scaledImage.height);
+        scaledImage.copy(videoStream, 0, 0, videoStream.width, videoStream.height, 0, 0, scaledImage.width, scaledImage.height);
 
       
         displayImage(scaledImage, 0, 0, captions[0][0]);  // Original
-        displayImage(convertToGrayscale(scaledImage), 1, 0, captions[0][1]);  // Grayscale
+        displayImage(grayscaleConversion(scaledImage), 1, 0, captions[0][1]);  // Grayscale
         
-        displayImage(splitIntoChannels(scaledImage)[0], 0, 1, captions[0][3]);  // Red Channel
+        displayImage(separateRGBChannels(scaledImage)[0], 0, 1, captions[0][3]);  // Red Channel
         
        
-        displayImage(splitIntoChannels(scaledImage)[1], 1, 1, captions[0][4]);  // Green Channel
-        displayImage(splitIntoChannels(scaledImage)[2], 2, 1, captions[0][5]);  // Blue Channel
-        displayImage(applyThreshold(splitIntoChannels(scaledImage)[0], redSlider.value()), 0, 2, captions[0][6]);  // Red Thresholded
-        displayImage(applyThreshold(splitIntoChannels(scaledImage)[1], greenSlider.value()), 1, 2, captions[0][7]);  // Green Thresholded
+        displayImage(separateRGBChannels(scaledImage)[1], 1, 1, captions[0][4]);  // Green Channel
+        displayImage(separateRGBChannels(scaledImage)[2], 2, 1, captions[0][5]);  // Blue Channel
+        displayImage(applyColorChannelThreshold(separateRGBChannels(scaledImage)[0], redSlider.value()), 0, 2, captions[0][6]);  // Red Thresholded
+        displayImage(applyColorChannelThreshold(separateRGBChannels(scaledImage)[1], greenSlider.value()), 1, 2, captions[0][7]);  // Green Thresholded
         
      
-        displayImage(applyThreshold(splitIntoChannels(scaledImage)[2], blueSlider.value()), 2, 2, captions[0][8]);  // Blue Thresholded
-        displayImage(blackAndWhiteThresholdImage(scaledImage, 128), 3, 2, captions[0][9]);  // B&W Thresholded
+        displayImage(applyColorChannelThreshold(separateRGBChannels(scaledImage)[2], blueSlider.value()), 2, 2, captions[0][8]);  // Blue Thresholded
+        displayImage(applyBWThreshold(scaledImage, 128), 3, 2, captions[0][9]);  // B&W Thresholded
         displayImage(convertToTCbCr(scaledImage), 0, 3, captions[0][10]);  // TCbCr Image
         displayImage(convertToHSV(scaledImage), 1, 3, captions[0][11]);  // HSV Image
         
      
-        displayImage(tcbrImageThreshold(scaledImage, tcbrThresholdSlider.value()), 2, 3, captions[0][12]);  // TCbCr Thresholded
-        displayImage(hsvImageThreshold(scaledImage, hsvThresholdSlider.value()), 3, 3, captions[0][13]);  // HSV Thresholded
+        displayImage(applyTCbCrThreshold(scaledImage, tcbrThresholdSlider.value()), 2, 3, captions[0][12]);  // TCbCr Thresholded
+        displayImage(applyHSVThreshold(scaledImage, hsvThresholdSlider.value()), 3, 3, captions[0][13]);  // HSV Thresholded
         
         displayImage(applyTimeWarpFilter(scaledImage, timeWarpSlider), 0, 4, captions[0][24]);  // Time Warp     
-        displayImage(convertToPixelate(scaledImage, pixelSize), 1, 4, captions[0][2]);  // Pixelated
+        displayImage(pixelateImage(scaledImage, pixelSize), 1, 4, captions[0][2]);  // Pixelated
         displayImage(applySepia(scaledImage), 2, 4, captions[0][14]);  // Sepia Image
         displayImage(invertColors(scaledImage), 3, 4, captions[0][15]); // Inverted Colors
 
@@ -187,8 +187,8 @@ function displayImage(img, col, row, caption) {
 
 function captureAndApplyFilters() {
     if (!isCapturing) {
-        // Pause the video to capture the current frame
-        video.pause();
+        // Pause the videoStream to capture the current frame
+        videoStream.pause();
 
         // Loop through all the grids
         for (let row = 0; row < 5; row++) {
@@ -202,8 +202,8 @@ function captureAndApplyFilters() {
         // Set capturing to true
         isCapturing = true;
     } else {
-        // Resume the video after resetting frames
-        video.play();
+        // Resume the videoStream after resetting frames
+        videoStream.play();
         for (let i = 0; i < canvasList.length; i++) {
             if (canvasList[i]) {
                 canvasList[i].clear();
@@ -216,8 +216,8 @@ function captureAndApplyFilters() {
 }
 
 function uncaptureAndUnfreeze() {
-    // Resume the video after resetting frames
-    video.play();
+    // Resume the videoStream after resetting frames
+    videoStream.play();
 
     // Clear the canvasList
     for (let i = 0; i < canvasList.length; i++) {
@@ -229,18 +229,18 @@ function uncaptureAndUnfreeze() {
     // Set capturing to false
     isCapturing = false;
 
-    // Unfreeze the video
+    // Unfreeze the videoStream
     unfreeze();
 }
 
 
 function unfreeze() {
-    video.loop(); 
+    videoStream.loop(); 
 }
 
 function saveImage() {
-    // Call video pause to get the frame
-    video.pause();
+    // Call videoStream pause to get the frame
+    videoStream.pause();
 
     // Create a graphics object to hold the entire grid
     let fullGridImage = createGraphics(width, height);
@@ -254,5 +254,5 @@ for (let row = 0; row < 8; row++) {
 }
     // Save the full grid image as a file
     fullGridImage.save("full_grid_image.png");
-    video.play();
+    videoStream.play();
 }
